@@ -13,7 +13,8 @@ Component.register('sw-dashboard-index', {
         return {
             historyOrderData: null,
             todayOrderData: [],
-            todayOrderDataLoaded: false
+            todayOrderDataLoaded: false,
+            cachedHeadlineGreetingKey: null
         };
     },
 
@@ -25,17 +26,22 @@ Component.register('sw-dashboard-index', {
 
     computed: {
         welcomeMessage() {
-            if (this.greetingName === '') {
-                return this.$tc(
-                    'sw-dashboard.introduction.headlineUnkownUser'
-                );
+            const greetingName = this.greetingName;
+            const welcomeMessage = this.$tc(
+                this.cachedHeadlineGreetingKey,
+                1,
+                { greetingName }
+            );
+
+            // in the headline we want to greet the user by his firstname
+            // if his first name is not available, we remove the personalized greeting part
+            // but we want to make sure the punctuation like `.`, `!` or `?` is kept
+            // for example "Still awake, ?" -> "Still awake?"…
+            if (!greetingName) {
+                return welcomeMessage.replace(/\,\s*/, '');
             }
 
-            return this.$tc(
-                this.getGreetingTimeKey('daytimeHeadline'),
-                1,
-                { greetingName: this.greetingName }
-            );
+            return welcomeMessage;
         },
 
         welcomeSubline() {
@@ -45,15 +51,12 @@ Component.register('sw-dashboard-index', {
         greetingName() {
             const { currentUser } = Shopware.State.get('session');
 
-            if (!currentUser) {
-                return '';
-            }
-
-            if (currentUser.firstName) {
-                return currentUser.firstName;
-            }
-
-            return currentUser.username;
+            // if currentUser?.firstName returns a loose falsy value
+            // like `""`, `0`, `false`, `null`, `undefined`
+            // we want to use `null` in the ongoing process chain,
+            // otherwise we would need to take care of `""` and `null`
+            // or `undefined` in tests and other places
+            return currentUser?.firstName || null;
         },
 
         chartOptionsOrderCount() {
@@ -81,7 +84,7 @@ Component.register('sw-dashboard-index', {
                     tickAmount: 5,
                     labels: {
                         // price aggregations do not support currencies yet, see NEXT-5069
-                        formatter: (value) => this.$options.filters.currency(value, 'EUR', 2)
+                        formatter: (value) => this.$options.filters.currency(value, null, 2)
                     }
                 }
             };
@@ -185,6 +188,9 @@ Component.register('sw-dashboard-index', {
 
     methods: {
         createdComponent() {
+            // cache personalized greeting key to avoid headline swap
+            this.cachedHeadlineGreetingKey = this.cachedHeadlineGreetingKey ?? this.getGreetingTimeKey('daytimeHeadline');
+
             if (!this.acl.can('order.viewer')) {
                 return;
             }
@@ -284,9 +290,12 @@ Component.register('sw-dashboard-index', {
          */
         getGreetingTimeKey(type = 'daytimeHeadline') {
             const translateKey = `sw-dashboard.introduction.${type}`;
-            const localeRepository = this.$i18n.messages[this.$i18n.locale];
-            const greetings = localeRepository['sw-dashboard'].introduction[type];
+            const greetings = this.getGreetings(type);
             const hourNow = new Date().getHours();
+
+            if (greetings === undefined) {
+                return '';
+            }
 
             // to find the right timeslot, we user array.find() which will stop after first match
             // for that reason the greetingTimes must be ordered from latest to earliest hour
@@ -300,6 +309,15 @@ Component.register('sw-dashboard-index', {
             const greetingIndex = Math.floor(Math.random() * greetings[`${greetingTime}h`].length);
 
             return `${translateKey}.${greetingTime}h[${greetingIndex}]`;
+        },
+
+        getGreetings(type = 'daytimeHeadline') {
+            const i18nMessages = this.$i18n.messages;
+
+            const localeGreetings = i18nMessages?.[this.$i18n.locale]?.['sw-dashboard']?.introduction?.[type];
+            const fallbackGreetings = i18nMessages?.[this.$i18n.fallbackLocale]?.['sw-dashboard']?.introduction?.[type];
+
+            return localeGreetings ?? fallbackGreetings;
         }
     }
 });

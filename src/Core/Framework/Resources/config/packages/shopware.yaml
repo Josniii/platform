@@ -89,6 +89,11 @@ shopware:
               major: false
               description: "Image assignment for variants"
               # issue: NEXT-6544
+            - name: FEATURE_NEXT_13250
+              default: false
+              major: true
+              description: "Reduce database queries if all required data for the line items is already assign"
+              # issue: NEXT-13250
             - name: FEATURE_NEXT_14872
               default: false
               major: false
@@ -114,26 +119,11 @@ shopware:
               major: false
               description: "Improve nested LineItem support"
               # issue: NEXT-12635
-            - name: FEATURE_NEXT_12870
-              default: false
-              major: false
-              description: "Remove default messenger routing rule"
-                # issue: NEXT-12870
-            - name: FEATURE_NEXT_14357
-              default: false
-              major: false
-              description: "App System 3.0 - Payments"
-              # issue: NEXT-14357
             - name: FEATURE_NEXT_14363
               default: false
               major: false
               description: "App System 3.0 - Dispatch webhook overqueue"
               # issue: NEXT-14363
-            - name: FEATURE_NEXT_12654
-              default: false
-              major: false
-              description: "Preview available variables of email templates in the administration"
-              # issue: NEXT-12654
             - name: FEATURE_NEXT_8225
               default: false
               major: false
@@ -144,6 +134,16 @@ shopware:
               major: false
               description: "Bulk Edit for Orders and Products"
               # issue: NEXT-6061
+            - name: FEATURE_NEXT_14408
+              default: false
+              major: false
+              description: "App System 3.0 - CMS blocks provided by apps"
+              # issue: NEXT-14408
+            - name: FEATURE_NEXT_12437
+              default: false
+              major: false
+              description: "Improve Product UX 2.0"
+              # issue: NEXT-12437
 
     logger:
         file_rotation_count: 14

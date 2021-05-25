@@ -76,6 +76,7 @@ Component.register('sw-users-permissions-user-listing', {
                 label: this.$tc('sw-users-permissions.users.user-grid.labelLastName')
             }, {
                 property: 'aclRoles',
+                sortable: false,
                 label: this.$tc('sw-users-permissions.users.user-grid.labelRoles')
             }, {
                 property: 'email',
@@ -104,6 +105,7 @@ Component.register('sw-users-permissions-user-listing', {
             this.$emit('get-list');
 
             return this.userRepository.search(this.userCriteria).then((users) => {
+                this.total = users.total;
                 this.user = users;
             }).finally(() => {
                 this.isLoading = false;

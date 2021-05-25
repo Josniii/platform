@@ -38,8 +38,12 @@ class OpenApiDefinitionSchemaBuilder
     /**
      * @return Schema[]
      */
-    public function getSchemaByDefinition(EntityDefinition $definition, string $path, bool $forSalesChannel, bool $onlyFlat = false): array
-    {
+    public function getSchemaByDefinition(
+        EntityDefinition $definition,
+        string $path,
+        bool $forSalesChannel,
+        bool $onlyFlat = false
+    ): array {
         $attributes = [];
         $requiredAttributes = [];
         $relationships = [];
@@ -80,6 +84,10 @@ class OpenApiDefinitionSchemaBuilder
 
             if ($field instanceof TranslatedField && $definition->getTranslationDefinition()) {
                 $field = $definition->getTranslationDefinition()->getFields()->get($field->getPropertyName());
+            }
+
+            if ($field === null) {
+                continue;
             }
 
             if ($field instanceof JsonField) {
@@ -130,7 +138,7 @@ class OpenApiDefinitionSchemaBuilder
             }
         }
 
-        $attributes = array_merge([new Property(['property' => 'id', 'type' => 'string', 'format' => 'uuid'])], $attributes);
+        $attributes = array_merge([new Property(['property' => 'id', 'type' => 'string', 'pattern' => '^[0-9a-f]{32}$'])], $attributes);
 
         if (!$onlyFlat) {
             /* @var Schema[] $schema */
@@ -233,7 +241,7 @@ class OpenApiDefinitionSchemaBuilder
                         ],
                         'id' => [
                             'type' => 'string',
-                            'format' => 'uuid',
+                            'pattern' => '^[0-9a-f]{32}$',
                             'example' => Uuid::randomHex(),
                         ],
                     ],
@@ -398,7 +406,7 @@ class OpenApiDefinitionSchemaBuilder
         }
         if (is_a($fieldClass, IdField::class, true) || is_a($fieldClass, FkField::class, true)) {
             $property->type = 'string';
-            $property->format = 'uuid';
+            $property->pattern = '^[0-9a-f]{32}$';
         }
 
         /* @var Since|null $flag */
@@ -432,7 +440,7 @@ class OpenApiDefinitionSchemaBuilder
         }
         if (is_a($fieldClass, IdField::class, true) || is_a($fieldClass, FkField::class, true)) {
             $property->type = 'string';
-            $property->format = 'uuid';
+            $property->pattern = '^[0-9a-f]{32}$';
         }
 
         return $property;

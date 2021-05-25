@@ -7,10 +7,7 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 class SalesChannelContextSwitcher
 {
-    /**
-     * @var ContextSwitchRoute
-     */
-    private $contextSwitchRoute;
+    private AbstractContextSwitchRoute $contextSwitchRoute;
 
     public function __construct(AbstractContextSwitchRoute $contextSwitchRoute)
     {

@@ -1211,11 +1211,6 @@ parameters:
 			path: src/Core/Content/Media/Thumbnail/ThumbnailService.php
 
 		-
-			message: "#^Cannot access offset 'Orientation' on array\\|false\\.$#"
-			count: 3
-			path: src/Core/Content/Media/Thumbnail/ThumbnailService.php
-
-		-
 			message: "#^Parameter \\#1 \\$im of function imagecolorallocate expects resource, resource\\|false given\\.$#"
 			count: 1
 			path: src/Core/Content/Media/Thumbnail/ThumbnailService.php
@@ -1316,18 +1311,8 @@ parameters:
 			path: src/Core/Content/Product/Cart/ProductCartProcessor.php
 
 		-
-			message: "#^Parameter \\#3 \\$freeDelivery of class Shopware\\\\Core\\\\Checkout\\\\Cart\\\\Delivery\\\\Struct\\\\DeliveryInformation constructor expects bool, bool\\|null given\\.$#"
-			count: 1
-			path: src/Core/Content/Product/Cart/ProductCartProcessor.php
-
-		-
 			message: "#^Cannot call method format\\(\\) on DateTimeInterface\\|null\\.$#"
 			count: 2
-			path: src/Core/Content/Product/Cart/ProductCartProcessor.php
-
-		-
-			message: "#^Argument of an invalid type Shopware\\\\Core\\\\Content\\\\Property\\\\Aggregate\\\\PropertyGroupOption\\\\PropertyGroupOptionCollection\\|null supplied for foreach, only iterables are supported\\.$#"
-			count: 1
 			path: src/Core/Content/Product/Cart/ProductCartProcessor.php
 
 		-
@@ -1429,11 +1414,6 @@ parameters:
 			message: "#^Argument of an invalid type array\\|null supplied for foreach, only iterables are supported\\.$#"
 			count: 1
 			path: src/Core/Content/Product/SalesChannel/Detail/ProductConfiguratorLoader.php
-
-		-
-			message: "#^Method Shopware\\\\Core\\\\Content\\\\Product\\\\SalesChannel\\\\Detail\\\\ProductDetailRoute\\:\\:findBestVariant\\(\\) should return string but returns array\\|string\\.$#"
-			count: 1
-			path: src/Core/Content/Product/SalesChannel/Detail/ProductDetailRoute.php
 
 		-
 			message: "#^Possibly invalid array key type array\\|string\\.$#"
@@ -1774,21 +1754,6 @@ parameters:
 			message: "#^Property Shopware\\\\Core\\\\Framework\\\\Adapter\\\\Twig\\\\NamespaceHierarchy\\\\NamespaceHierarchyBuilder\\:\\:\\$namespaceHierarchyBuilders \\(array\\<Shopware\\\\Core\\\\Framework\\\\Adapter\\\\Twig\\\\NamespaceHierarchy\\\\TemplateNamespaceHierarchyBuilderInterface\\>\\) does not accept iterable\\.$#"
 			count: 1
 			path: src/Core/Framework/Adapter/Twig/NamespaceHierarchy/NamespaceHierarchyBuilder.php
-
-		-
-			message: "#^Binary operation \"\\+\" between int\\|string\\|false and 1 results in an error\\.$#"
-			count: 1
-			path: src/Core/Framework/Adapter/Twig/TemplateFinder.php
-
-		-
-			message: "#^Parameter \\#1 \\$name of method Twig\\\\Loader\\\\LoaderInterface\\:\\:exists\\(\\) expects string, string\\|null given\\.$#"
-			count: 1
-			path: src/Core/Framework/Adapter/Twig/TemplateFinder.php
-
-		-
-			message: "#^Method Shopware\\\\Core\\\\Framework\\\\Adapter\\\\Twig\\\\TemplateFinder\\:\\:find\\(\\) should return string but returns string\\|null\\.$#"
-			count: 1
-			path: src/Core/Framework/Adapter/Twig/TemplateFinder.php
 
 		-
 			message: "#^Class Shopware\\\\Core\\\\Framework\\\\Adapter\\\\Twig\\\\TemplateIterator implements generic interface IteratorAggregate but does not specify its types\\: TKey, TValue$#"
@@ -3826,6 +3791,31 @@ parameters:
 			path: src/Core/Framework/Validation/Exception/ConstraintViolationException.php
 
 		-
+			message: "#^Cannot call method getName\\(\\) on Shopware\\\\Core\\\\System\\\\Currency\\\\CurrencyEntity\\|null\\.$#"
+			count: 1
+			path: src/Core/System/SalesChannel/Command/SalesChannelListCommand.php
+
+		-
+			message: "#^Cannot call method getName\\(\\) on Shopware\\\\Core\\\\System\\\\Language\\\\LanguageEntity\\|null\\.$#"
+			count: 1
+			path: src/Core/System/SalesChannel/Command/SalesChannelListCommand.php
+
+		-
+			message: "#^Cannot call method map\\(\\) on Shopware\\\\Core\\\\System\\\\Currency\\\\CurrencyCollection\\|null\\.$#"
+			count: 1
+			path: src/Core/System/SalesChannel/Command/SalesChannelListCommand.php
+
+		-
+			message: "#^Cannot call method map\\(\\) on Shopware\\\\Core\\\\System\\\\Language\\\\LanguageCollection\\|null\\.$#"
+			count: 1
+			path: src/Core/System/SalesChannel/Command/SalesChannelListCommand.php
+
+		-
+			message: "#^Cannot call method map\\(\\) on Shopware\\\\Core\\\\System\\\\SalesChannel\\\\Aggregate\\\\SalesChannelDomain\\\\SalesChannelDomainCollection\\|null\\.$#"
+			count: 1
+			path: src/Core/System/SalesChannel/Command/SalesChannelListCommand.php
+
+		-
 			message: "#^Method Shopware\\\\Core\\\\Framework\\\\Webhook\\\\BusinessEventEncoder\\:\\:encodeProperty\\(\\) has no return typehint specified\\.$#"
 			count: 1
 			path: src/Core/Framework/Webhook/BusinessEventEncoder.php
@@ -4712,11 +4702,6 @@ parameters:
 
 		-
 			message: "#^Method Shopware\\\\Storefront\\\\Theme\\\\StorefrontPluginConfiguration\\\\StorefrontPluginConfiguration\\:\\:getBasePath\\(\\) should return string but returns string\\|null\\.$#"
-			count: 1
-			path: src/Storefront/Theme/StorefrontPluginConfiguration/StorefrontPluginConfiguration.php
-
-		-
-			message: "#^Property Shopware\\\\Storefront\\\\Theme\\\\StorefrontPluginConfiguration\\\\StorefrontPluginConfiguration\\:\\:\\$themeConfig \\(array\\) does not accept array\\|null\\.$#"
 			count: 1
 			path: src/Storefront/Theme/StorefrontPluginConfiguration/StorefrontPluginConfiguration.php
 

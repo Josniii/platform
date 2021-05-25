@@ -49,15 +49,20 @@ class ApiAwareTest extends TestCase
 
         $expected = json_decode($expected, true);
 
-        if (Feature::isActive('FEATURE_NEXT_14357')) {
-            $expected[] = 'app_payment_method.createdAt';
-            $expected[] = 'app_payment_method.updatedAt';
-        }
-
         if (Feature::isActive('FEATURE_NEXT_14114')) {
             $expected[] = 'country.vatIdRequired';
             $expected[] = 'country.taxFreeFrom';
             $expected[] = 'currency.taxFreeFrom';
+        }
+
+        if (Feature::isActive('FEATURE_NEXT_14408')) {
+            $expected[] = 'app_cms_block.createdAt';
+            $expected[] = 'app_cms_block.updatedAt';
+            $expected[] = 'app_cms_block.translated';
+            $expected[] = 'app_cms_block_translation.createdAt';
+            $expected[] = 'app_cms_block_translation.updatedAt';
+            $expected[] = 'app_cms_block_translation.appCmsBlockId';
+            $expected[] = 'app_cms_block_translation.languageId';
         }
 
         $message = 'One or more fields have been changed in their visibility for the Store Api.

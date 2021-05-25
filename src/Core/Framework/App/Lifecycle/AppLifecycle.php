@@ -13,6 +13,7 @@ use Shopware\Core\Framework\App\Exception\AppAlreadyInstalledException;
 use Shopware\Core\Framework\App\Exception\AppRegistrationException;
 use Shopware\Core\Framework\App\Exception\InvalidAppConfigurationException;
 use Shopware\Core\Framework\App\Lifecycle\Persister\ActionButtonPersister;
+use Shopware\Core\Framework\App\Lifecycle\Persister\CmsBlockPersister;
 use Shopware\Core\Framework\App\Lifecycle\Persister\CustomFieldPersister;
 use Shopware\Core\Framework\App\Lifecycle\Persister\PaymentMethodPersister;
 use Shopware\Core\Framework\App\Lifecycle\Persister\PermissionPersister;
@@ -35,7 +36,7 @@ use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
- * @internal only for use by the app-system, will be considered internal from v6.4.0 onward
+ * @internal
  */
 class AppLifecycle extends AbstractAppLifecycle
 {
@@ -59,10 +60,12 @@ class AppLifecycle extends AbstractAppLifecycle
 
     private WebhookPersister $webhookPersister;
 
+    private PaymentMethodPersister $paymentMethodPersister;
+
     /**
-     * @internal (flag:FEATURE_NEXT_14357) make persister not nullable on removal
+     * @internal (flag:FEATURE_NEXT_14408) make persister not nullable on removal
      */
-    private ?PaymentMethodPersister $paymentMethodPersister;
+    private ?CmsBlockPersister $cmsBlockPersister;
 
     private EntityRepositoryInterface $languageRepository;
 
@@ -81,7 +84,8 @@ class AppLifecycle extends AbstractAppLifecycle
         ActionButtonPersister $actionButtonPersister,
         TemplatePersister $templatePersister,
         WebhookPersister $webhookPersister,
-        ?PaymentMethodPersister $paymentMethodPersister,
+        PaymentMethodPersister $paymentMethodPersister,
+        ?CmsBlockPersister $cmsBlockPersister,
         AbstractAppLoader $appLoader,
         EventDispatcherInterface $eventDispatcher,
         AppRegistrationService $registrationService,
@@ -97,6 +101,7 @@ class AppLifecycle extends AbstractAppLifecycle
         $this->customFieldPersister = $customFieldPersister;
         $this->webhookPersister = $webhookPersister;
         $this->paymentMethodPersister = $paymentMethodPersister;
+        $this->cmsBlockPersister = $cmsBlockPersister;
         $this->appLoader = $appLoader;
         $this->eventDispatcher = $eventDispatcher;
         $this->registrationService = $registrationService;
@@ -150,7 +155,7 @@ class AppLifecycle extends AbstractAppLifecycle
         );
     }
 
-    public function delete(string $appName, array $app, Context $context): void
+    public function delete(string $appName, array $app, Context $context, bool $keepUserData = false): void
     {
         $appEntity = $this->loadApp($app['id'], $context);
 
@@ -158,7 +163,7 @@ class AppLifecycle extends AbstractAppLifecycle
             $this->appStateService->deactivateApp($appEntity->getId(), $context);
         }
 
-        $this->removeAppAndRole($appEntity, $context);
+        $this->removeAppAndRole($appEntity, $context, $keepUserData);
     }
 
     private function updateApp(
@@ -204,15 +209,19 @@ class AppLifecycle extends AbstractAppLifecycle
         if ($app->getAppSecret()) {
             $this->actionButtonPersister->updateActions($manifest, $id, $defaultLocale, $context);
             $this->webhookPersister->updateWebhooks($manifest, $id, $defaultLocale, $context);
-            if (Feature::isActive('FEATURE_NEXT_14357') && $this->paymentMethodPersister !== null) {
-                // on removal of FEATURE_NEXT_14357: Make paymentMethodPersister not nullable
-                $this->paymentMethodPersister->updatePaymentMethods($manifest, $id, $defaultLocale, $context);
-            }
+            $this->paymentMethodPersister->updatePaymentMethods($manifest, $id, $defaultLocale, $context);
             $this->updateModules($manifest, $id, $defaultLocale, $context);
         }
 
         $this->templatePersister->updateTemplates($manifest, $id, $context);
         $this->customFieldPersister->updateCustomFields($manifest, $id, $context);
+
+        if (Feature::isActive('FEATURE_NEXT_14408') && $this->cmsBlockPersister !== null) {
+            $cmsExtensions = $this->appLoader->getCmsExtensions($app);
+            if ($cmsExtensions) {
+                $this->cmsBlockPersister->updateCmsBlocks($cmsExtensions, $id, $defaultLocale, $context);
+            }
+        }
 
         $config = $this->appLoader->getConfiguration($app);
         if ($config) {
@@ -240,11 +249,11 @@ class AppLifecycle extends AbstractAppLifecycle
         return $app;
     }
 
-    private function removeAppAndRole(AppEntity $app, Context $context): void
+    private function removeAppAndRole(AppEntity $app, Context $context, bool $keepUserData = false): void
     {
         // throw event before deleting app from db as it may be delivered via webhook to the deleted app
         $this->eventDispatcher->dispatch(
-            new AppDeletedEvent($app->getId(), $context)
+            new AppDeletedEvent($app->getId(), $context, $keepUserData)
         );
 
         $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($app): void {

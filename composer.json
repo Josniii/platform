@@ -40,6 +40,7 @@
         "ext-pdo": "*",
         "ext-pdo_mysql": "*",
         "ext-simplexml": "*",
+        "ext-sodium": "*",
         "ext-xml": "*",
         "ext-zip": "*",
         "ext-zlib": "*",

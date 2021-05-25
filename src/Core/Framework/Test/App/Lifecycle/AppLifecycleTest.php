@@ -10,6 +10,7 @@ use Shopware\Core\Content\Media\File\FileLoader;
 use Shopware\Core\Defaults;
 use Shopware\Core\Framework\Api\Context\AdminApiSource;
 use Shopware\Core\Framework\App\Aggregate\ActionButton\ActionButtonEntity;
+use Shopware\Core\Framework\App\Aggregate\CmsBlock\AppCmsBlockEntity;
 use Shopware\Core\Framework\App\AppCollection;
 use Shopware\Core\Framework\App\AppEntity;
 use Shopware\Core\Framework\App\Event\AppDeletedEvent;
@@ -133,6 +134,7 @@ class AppLifecycleTest extends TestCase
         $this->assertDefaultWebhooks($apps->first()->getId());
         $this->assertDefaultTemplate($apps->first()->getId());
         $this->assertDefaultPaymentMethods($apps->first()->getId());
+        $this->assertDefaultCmsBlocks($apps->first()->getId());
     }
 
     public function testInstallRollbacksRegistrationFailure(): void
@@ -325,36 +327,30 @@ class AppLifecycleTest extends TestCase
                     'active' => false,
                 ],
             ],
-        ]], Context::createDefaultContext());
-
-        if (Feature::isActive('FEATURE_NEXT_14357')) {
-            $this->appRepository->update([[
-                'id' => $id,
-                'paymentMethods' => [
-                    [
-                        'paymentMethod' => [
-                            'handlerIdentifier' => 'app\\test\\myMethod',
-                            'name' => 'My method',
-                            'active' => false,
-                            'media' => [
-                                'private' => true,
-                            ],
+            'paymentMethods' => [
+                [
+                    'paymentMethod' => [
+                        'handlerIdentifier' => 'app\\test\\myMethod',
+                        'name' => 'My method',
+                        'active' => false,
+                        'media' => [
+                            'private' => true,
                         ],
-                        'appName' => 'test',
-                        'identifier' => 'myMethod',
                     ],
-                    [
-                        'paymentMethod' => [
-                            'handlerIdentifier' => 'app\\test\\toBeRemoved',
-                            'name' => 'This method shall be removed',
-                            'active' => false,
-                        ],
-                        'appName' => 'test',
-                        'identifier' => 'toBeRemoved',
-                    ],
+                    'appName' => 'test',
+                    'identifier' => 'myMethod',
                 ],
-            ]], Context::createDefaultContext());
-        }
+                [
+                    'paymentMethod' => [
+                        'handlerIdentifier' => 'app\\test\\toBeRemoved',
+                        'name' => 'This method shall be removed',
+                        'active' => false,
+                    ],
+                    'appName' => 'test',
+                    'identifier' => 'toBeRemoved',
+                ],
+            ],
+        ]], Context::createDefaultContext());
 
         $permissionPersister = $this->getContainer()->get(PermissionPersister::class);
         $permissions = Permissions::fromArray([
@@ -480,36 +476,30 @@ class AppLifecycleTest extends TestCase
                     'active' => true,
                 ],
             ],
-        ]], Context::createDefaultContext());
-
-        if (Feature::isActive('FEATURE_NEXT_14357')) {
-            $this->appRepository->update([[
-                'id' => $id,
-                'paymentMethods' => [
-                    [
-                        'paymentMethod' => [
-                            'handlerIdentifier' => 'app\\test\\myMethod',
-                            'name' => 'My method',
-                            'active' => true,
-                            'media' => [
-                                'private' => false,
-                            ],
+            'paymentMethods' => [
+                [
+                    'paymentMethod' => [
+                        'handlerIdentifier' => 'app\\test\\myMethod',
+                        'name' => 'My method',
+                        'active' => true,
+                        'media' => [
+                            'private' => false,
                         ],
-                        'appName' => 'test',
-                        'identifier' => 'myMethod',
                     ],
-                    [
-                        'paymentMethod' => [
-                            'handlerIdentifier' => 'app\\test\\toBeRemoved',
-                            'name' => 'This method shall be removed',
-                            'active' => true,
-                        ],
-                        'appName' => 'test',
-                        'identifier' => 'toBeRemoved',
-                    ],
+                    'appName' => 'test',
+                    'identifier' => 'myMethod',
                 ],
-            ]], Context::createDefaultContext());
-        }
+                [
+                    'paymentMethod' => [
+                        'handlerIdentifier' => 'app\\test\\toBeRemoved',
+                        'name' => 'This method shall be removed',
+                        'active' => true,
+                    ],
+                    'appName' => 'test',
+                    'identifier' => 'toBeRemoved',
+                ],
+            ],
+        ]], Context::createDefaultContext());
 
         $permissionPersister = $this->getContainer()->get(PermissionPersister::class);
         $permissions = Permissions::fromArray([
@@ -621,9 +611,7 @@ class AppLifecycleTest extends TestCase
         $criteria = new Criteria();
         $criteria->addAssociation('actionButtons');
         $criteria->addAssociation('webhooks');
-        if (Feature::isActive('FEATURE_NEXT_14357')) {
-            $criteria->addAssociation('paymentMethods');
-        }
+        $criteria->addAssociation('paymentMethods');
         /** @var AppCollection $apps */
         $apps = $this->appRepository->search($criteria, $this->context)->getEntities();
 
@@ -1080,10 +1068,6 @@ class AppLifecycleTest extends TestCase
 
     private function assertDefaultPaymentMethods(string $appId): void
     {
-        if (!Feature::isActive('FEATURE_NEXT_14357')) {
-            return;
-        }
-
         /** @var EntityRepositoryInterface $paymentMethodRepository */
         $paymentMethodRepository = $this->getContainer()->get('payment_method.repository');
 
@@ -1109,6 +1093,58 @@ class AppLifecycleTest extends TestCase
         static::assertSame('myMethod', $appPaymentMethod->getIdentifier());
         static::assertSame('https://payment.app/payment/process', $appPaymentMethod->getPayUrl());
         static::assertSame('https://payment.app/payment/finalize', $appPaymentMethod->getFinalizeUrl());
+    }
+
+    private function assertDefaultCmsBlocks(string $appId): void
+    {
+        if (!Feature::isActive('FEATURE_NEXT_14408')) {
+            return;
+        }
+
+        /** @var EntityRepositoryInterface $cmsBlockRepository */
+        $cmsBlockRepository = $this->getContainer()->get('app_cms_block.repository');
+
+        $criteria = new Criteria();
+        $criteria->addFilter(
+            new EqualsFilter('appId', $appId)
+        );
+
+        $cmsBlocks = $cmsBlockRepository->search($criteria, $this->context)->getEntities();
+        static::assertCount(2, $cmsBlocks);
+
+        /** @var AppCmsBlockEntity|null $firstCmsBlock */
+        $firstCmsBlock = $cmsBlocks->filterByProperty('name', 'my-first-block')->first();
+        static::assertEquals('my-first-block', $firstCmsBlock->getName());
+        static::assertEquals('First block from app', $firstCmsBlock->getLabel());
+        static::assertJsonStringEqualsJsonFile(
+            __DIR__ . '/_fixtures/cms/expectedFirstCmsBlock.json',
+            json_encode($firstCmsBlock->getBlock())
+        );
+        static::assertEquals(
+            file_get_contents(__DIR__ . '/../Manifest/_fixtures/test/Resources/cms/blocks/my-first-block/preview.html'),
+            $firstCmsBlock->getTemplate()
+        );
+        static::assertEquals(
+            file_get_contents(__DIR__ . '/../Manifest/_fixtures/test/Resources/cms/blocks/my-first-block/styles.css'),
+            $firstCmsBlock->getStyles()
+        );
+
+        /** @var AppCmsBlockEntity|null $secondCmsBlock */
+        $secondCmsBlock = $cmsBlocks->filterByProperty('name', 'my-second-block')->first();
+        static::assertEquals('my-second-block', $secondCmsBlock->getName());
+        static::assertEquals('Second block from app', $secondCmsBlock->getLabel());
+        static::assertJsonStringEqualsJsonFile(
+            __DIR__ . '/_fixtures/cms/expectedSecondCmsBlock.json',
+            json_encode($secondCmsBlock->getBlock())
+        );
+        static::assertEquals(
+            file_get_contents(__DIR__ . '/../Manifest/_fixtures/test/Resources/cms/blocks/my-second-block/preview.html'),
+            $secondCmsBlock->getTemplate()
+        );
+        static::assertEquals(
+            file_get_contents(__DIR__ . '/../Manifest/_fixtures/test/Resources/cms/blocks/my-second-block/styles.css'),
+            $secondCmsBlock->getStyles()
+        );
     }
 
     private function setNewSystemLanguage(string $iso): void

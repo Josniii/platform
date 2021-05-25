@@ -2,15 +2,19 @@
 
 namespace Shopware\Storefront\Controller;
 
+use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Storefront\Framework\Twig\ErrorTemplateResolver;
 use Shopware\Storefront\Page\Navigation\Error\ErrorPageLoaderInterface;
+use Shopware\Storefront\Pagelet\Footer\FooterPageletLoaderInterface;
 use Shopware\Storefront\Pagelet\Header\HeaderPageletLoaderInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\Validator\ConstraintViolationList;
 
 class ErrorController extends StorefrontController
 {
@@ -39,18 +43,22 @@ class ErrorController extends StorefrontController
      */
     private $systemConfigService;
 
+    private FooterPageletLoaderInterface $footerPageletLoader;
+
     public function __construct(
         ErrorTemplateResolver $errorTemplateResolver,
         Session $session,
         HeaderPageletLoaderInterface $headerPageletLoader,
         SystemConfigService $systemConfigService,
-        ErrorPageLoaderInterface $errorPageLoader
+        ErrorPageLoaderInterface $errorPageLoader,
+        FooterPageletLoaderInterface $footerPageletLoader
     ) {
         $this->errorTemplateResolver = $errorTemplateResolver;
         $this->session = $session;
         $this->headerPageletLoader = $headerPageletLoader;
         $this->errorPageLoader = $errorPageLoader;
         $this->systemConfigService = $systemConfigService;
+        $this->footerPageletLoader = $footerPageletLoader;
     }
 
     public function error(\Throwable $exception, Request $request, SalesChannelContext $context): Response
@@ -79,7 +87,9 @@ class ErrorController extends StorefrontController
 
                 if (!$request->isXmlHttpRequest()) {
                     $header = $this->headerPageletLoader->load($request, $context);
+                    $footer = $this->footerPageletLoader->load($request, $context);
                     $errorTemplate->setHeader($header);
+                    $errorTemplate->setFooter($footer);
                 }
 
                 $response = $this->renderStorefront($errorTemplate->getTemplateName(), ['page' => $errorTemplate]);
@@ -102,5 +112,29 @@ class ErrorController extends StorefrontController
         $this->session->getFlashBag()->clear();
 
         return $response;
+    }
+
+    /**
+     * @internal (flag:FEATURE_NEXT_12455)
+     */
+    public function onCaptchaFailure(
+        ConstraintViolationList $violations,
+        Request $request
+    ): Response {
+        $formViolations = new ConstraintViolationException($violations, []);
+        if (!$request->isXmlHttpRequest()) {
+            return $this->forwardToRoute($request->get('_route'), ['formViolations' => $formViolations]);
+        }
+
+        $response = [];
+        $response[] = [
+            'type' => 'danger',
+            'alert' => $this->renderView('@Storefront/storefront/utilities/alert.html.twig', [
+                'type' => 'danger',
+                'list' => [$this->trans('error.' . $formViolations->getViolations()->get(0)->getCode())],
+            ]),
+        ];
+
+        return new JsonResponse($response);
     }
 }
